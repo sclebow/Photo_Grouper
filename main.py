@@ -54,14 +54,12 @@ def get_images_metadata(directory):
                 file_size = stat.st_size
                 image = Image.open(filepath)
                 exif = {ExifTags.TAGS[k]: v for k, v in image._getexif().items()} if image._getexif() else {}
-                # print("EXIF Data:", exif)
                 modification_time = exif.get('DateTimeOriginal')
                 try:
                     modification_time = datetime.strptime(modification_time, '%Y:%m:%d %H:%M:%S')
                 except (ValueError, TypeError):
                     modification_time = None
                     print("Could not parse modification time for file:", filepath)
-                # print("Modification Time:", modification_time, type(modification_time))
                 
                 images_data.append({
                     "Filename": filepath.name,
@@ -170,3 +168,19 @@ fig = px.histogram(
     )
 
 st.plotly_chart(fig)
+
+tabs = st.tabs([f"Cluster {i}" for i in range(len(cluster_counts))])
+
+for i, tab in enumerate(tabs):
+    # Show a gallery of images in this cluster
+    cluster_df = df[df["Cluster"] == i]
+    with tab:
+        st.subheader(f"Cluster {i} - {len(cluster_df)} photos")
+        cols = st.columns(5)
+        for idx, row in cluster_df.iterrows():
+            col = cols[idx % 5]
+            try:
+                image = Image.open(row["Filepath"])
+                col.image(image, caption=row["Filename"])
+            except Exception as e:
+                col.write(f"Error loading image: {row['Filename']}")
