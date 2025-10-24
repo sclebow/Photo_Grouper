@@ -114,7 +114,7 @@ timestamps = np.array([[dt.timestamp()] for dt in timestamps.flatten()])
 
 # Apply DBSCAN clustering (convert hours to seconds)
 grouping_hours = st.sidebar.slider("Group photos taken within how many hours?", 
-                                    min_value=0.01, max_value=1.0, value=0.25, step=0.01,
+                                    min_value=0.01, max_value=1.0, value=0.01, step=0.01,
                                     help="Photos taken within this number of hours will be grouped together.")
 eps_seconds = grouping_hours * 3600
 
@@ -169,18 +169,48 @@ fig = px.histogram(
 
 st.plotly_chart(fig)
 
-tabs = st.tabs([f"Cluster {i}" for i in range(len(cluster_counts))])
+# Create a dictionary of filepaths for each cluster
+filepaths_by_cluster = {}
+for cluster_label in df['Cluster'].unique():
+    filepaths = df[df['Cluster'] == cluster_label]['Filepath'].tolist()
+    filepaths_by_cluster[cluster_label] = filepaths
 
+my_bar = st.progress(0, text='Loading and displaying images...')
+
+tabs = st.tabs([f"Cluster {i + 1}" for i in range(len(filepaths_by_cluster))])
+num_columns_per_tab = 5
+
+column_dict = {}
 for i, tab in enumerate(tabs):
-    # Show a gallery of images in this cluster
-    cluster_df = df[df["Cluster"] == i]
     with tab:
-        st.subheader(f"Cluster {i} - {len(cluster_df)} photos")
-        cols = st.columns(5)
-        for idx, row in cluster_df.iterrows():
-            col = cols[idx % 5]
+        cols = st.columns(num_columns_per_tab)
+        column_dict[i] = cols
+
+longest_filepath_list_length = max(len(filepaths) for filepaths in filepaths_by_cluster.values())
+
+print("Longest filepath list length:", longest_filepath_list_length)
+
+number_of_images_to_load_together = 10
+
+images_loaded = 0
+# Load and display images in batches to optimize performance
+for batch_start in range(0, longest_filepath_list_length, number_of_images_to_load_together):
+    for cluster_label, filepaths in filepaths_by_cluster.items():
+        tab_index = cluster_label
+        cols = column_dict[tab_index]
+        
+        batch_filepaths = filepaths[batch_start:batch_start + number_of_images_to_load_together]
+        
+        for idx, filepath in enumerate(batch_filepaths):
+            col = cols[idx % num_columns_per_tab]
             try:
-                image = Image.open(row["Filepath"])
-                col.image(image, caption=row["Filename"])
+                image = Image.open(filepath)
+                col.image(image, caption=Path(filepath).name)
             except Exception as e:
-                col.write(f"Error loading image: {row['Filename']}")
+                col.write(f"Error loading image: {Path(filepath).name}")
+            images_loaded += 1
+            progress_percentage = int((images_loaded / len(df)) * 100)
+            my_bar.progress(progress_percentage, text=f'Batch Loaded {images_loaded} of {len(df)} images. Currently loading Cluster {cluster_label + 1}.')
+
+my_bar.progress(100, text='All images loaded and displayed.')
+my_bar.empty()
