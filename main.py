@@ -21,21 +21,6 @@ st.set_page_config(
 # Prompt the user for a directory containing photos
 st.title("⚡ Fast Photo Organizer by Creation Date")
 
-# Add configuration options in sidebar
-st.sidebar.header("Configuration")
-
-directory = st.text_input("Enter the directory path containing your photos:", 
-                         help="Full path to the folder containing your image files")
-
-if not directory:
-    st.info("Please enter a directory path to proceed.")
-    st.stop()
-
-# Verify the directory exists
-if not os.path.isdir(directory):
-    st.error("The specified directory does not exist. Please enter a valid directory path.")
-    st.stop()
-
 # Get all images from the specified directory (optimized for speed)
 @st.cache_data
 def get_images_metadata(directory):
