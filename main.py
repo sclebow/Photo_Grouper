@@ -7,7 +7,7 @@ import pandas as pd
 from pathlib import Path
 from plotly import express as px 
 from PIL import Image, ExifTags
-from stqdm import stqdm
+# from stqdm import stqdm
 
 print("\n" * 10)
 print("Starting Photo Organizer Application...")
@@ -103,9 +103,9 @@ st.plotly_chart(fig)
 
 with st.expander("See Raw Data"):
     st.write("Photos with missing creation dates:")
-    st.dataframe(nan_df, use_container_width=True)
+    st.dataframe(nan_df, width='stretch')
     st.write("Photos with valid creation dates:")
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width='stretch')
 
 # Convert creation dates to timestamps for clustering
 timestamps = np.array([data["Creation Date"] for data in df.to_dict('records')])
@@ -145,7 +145,7 @@ st.download_button(
     mime="text/csv"
 )
 
-st.dataframe(df, use_container_width=True)
+st.dataframe(df, width='stretch')
 
 # Show cluster data
 st.subheader("Cluster Data")
@@ -173,10 +173,6 @@ st.plotly_chart(fig)
 st.sidebar.header("Performance Settings")
 thumbnail_size = st.sidebar.selectbox("Thumbnail size:", [150, 200, 300, 400], index=1, 
                                      help="Smaller thumbnails load faster")
-images_per_page = st.sidebar.selectbox("Images per page:", [20, 50, 100, 200], index=1,
-                                      help="Fewer images per page loads faster")
-lazy_load = st.sidebar.checkbox("Enable lazy loading", value=True, 
-                               help="Only load images when their tab is selected")
 
 @st.cache_data
 def load_and_resize_image(filepath, size=(200, 200)):
@@ -192,28 +188,24 @@ def load_and_resize_image(filepath, size=(200, 200)):
     except Exception as e:
         return None
 
-def display_images_in_tab(cluster_label, filepaths, page=0):
-    """Display images for a specific cluster and page"""
-    start_idx = page * images_per_page
-    end_idx = start_idx + images_per_page
-    page_filepaths = filepaths[start_idx:end_idx]
-    
-    if not page_filepaths:
-        st.write("No images on this page.")
+def display_images_in_tab(cluster_label, filepaths):
+    """Display all images for a specific cluster"""
+    if not filepaths:
+        st.write("No images in this cluster.")
         return
     
     # Create columns for layout
     num_columns = 5
     cols = st.columns(num_columns)
     
-    # Display images in columns
-    for idx, filepath in enumerate(page_filepaths):
+    # Display all images in columns
+    for idx, filepath in enumerate(filepaths):
         col = cols[idx % num_columns]
         with col:
             # Load and display thumbnail
             thumbnail = load_and_resize_image(filepath, (thumbnail_size, thumbnail_size))
             if thumbnail:
-                st.image(thumbnail, caption=Path(filepath).name, use_container_width=True)
+                st.image(thumbnail, caption=Path(filepath).name, width='stretch')
                 # Add button to view full size
                 if st.button(f"View Full Size", key=f"full_{cluster_label}_{idx}"):
                     with st.expander("Full Size Image", expanded=True):
@@ -245,33 +237,8 @@ if filepaths_by_cluster:
         with tab:
             filepaths = filepaths_by_cluster[cluster_label]
             
-            if not lazy_load or f"cluster_{cluster_label}_loaded" in st.session_state:
-                # Calculate pagination
-                total_pages = (len(filepaths) + images_per_page - 1) // images_per_page
-                
-                if total_pages > 1:
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        page = st.selectbox(
-                            f"Page (showing {images_per_page} images per page):",
-                            range(total_pages),
-                            key=f"page_cluster_{cluster_label}",
-                            format_func=lambda x: f"Page {x + 1} of {total_pages}"
-                        )
-                else:
-                    page = 0
-                
-                # Display images for current page
-                with st.spinner(f'Loading images for Cluster {cluster_label + 1}...'):
-                    display_images_in_tab(cluster_label, filepaths, page)
-                    
-                # Mark this cluster as loaded
-                st.session_state[f"cluster_{cluster_label}_loaded"] = True
-            else:
-                # Show placeholder with load button
-                st.info(f"Cluster {cluster_label + 1} contains {len(filepaths)} images.")
-                if st.button(f"Load Images for Cluster {cluster_label + 1}", key=f"load_{cluster_label}"):
-                    st.session_state[f"cluster_{cluster_label}_loaded"] = True
-                    st.rerun()
+            # Display all images for this cluster
+            with st.spinner(f'Loading images for Cluster {cluster_label + 1}...'):
+                display_images_in_tab(cluster_label, filepaths)
 else:
     st.warning("No image clusters found.")
