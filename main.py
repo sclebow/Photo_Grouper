@@ -22,11 +22,23 @@ st.title("Fast Photo Organizer by Creation Date")
 st.subheader("Created by Scott Lebow PE")
 st.write("Organize your photos quickly based on their creation dates using DBSCAN clustering.")
 
+st.markdown("---")
+
 user_input_page = st.Page(
-    page="./pages/user_input.py"
+    page="./pages/user_input.py",
+    title="01 User Input",
 )
 clustering_page = st.Page(
-    page="./pages/clustering.py"
+    page="./pages/clustering.py",
+    title="02 Clustering"
+)
+gallery_viewer_page = st.Page(
+    page="./pages/gallery_viewer.py",
+    title="03 Gallery Viewer"
+)
+organizer_page = st.Page(
+    page="./pages/organizer.py",
+    title="04 Organizer"
 )
 
 pg = st.navigation(
@@ -35,7 +47,11 @@ pg = st.navigation(
             user_input_page
         ],
         "Clustering & Visualization": [
-            clustering_page
+            clustering_page,
+            gallery_viewer_page
+        ],
+        "Organizer": [
+            organizer_page
         ]
     },
     position="sidebar",

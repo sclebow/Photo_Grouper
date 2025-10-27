@@ -21,10 +21,13 @@ timestamps = timestamps.reshape(-1, 1)
 timestamps = np.array([[dt.timestamp()] for dt in timestamps.flatten()])
 
 # Apply DBSCAN clustering (convert hours to seconds)
-grouping_hours = st.slider("Group photos taken within how many hours?", 
-                                    min_value=0.01, max_value=1.0, value=0.01, step=0.01,
-                                    help="Photos taken within this number of hours will be grouped together.")
-eps_seconds = grouping_hours * 3600
+grouping_minutes = st.slider("Group photos taken within how many minutes?", 
+                                    min_value=0.05, max_value=10.0, value=st.session_state.get("grouping_minutes", 1.0), step=0.05,
+                                    help="Photos taken within this number of minutes will be grouped together.")
+
+st.session_state["grouping_minutes"] = grouping_minutes
+
+eps_seconds = grouping_minutes * 60
 
 clustering = DBSCAN(eps=eps_seconds, min_samples=1).fit(timestamps)
 labels = clustering.labels_
@@ -63,7 +66,9 @@ st.subheader("Time Group Distribution")
 
 # Create a histogram with the x-axis as timestamps and the y-axis as counts
 resolution = st.slider("Select histogram resolution (number of bins multiplier):", 
-                           min_value=1, max_value=20, value=5, step=1)
+                           min_value=1, max_value=20, value=st.session_state.get("histogram_resolution", 5), step=1)
+
+st.session_state["histogram_resolution"] = resolution
 
 # Create stacked bars by cluster
 fig = px.histogram(
@@ -77,78 +82,9 @@ fig = px.histogram(
 
 st.plotly_chart(fig)
 
-# Performance optimization settings
-st.header("Cluster Image Viewer Settings")
-thumbnail_size = st.selectbox("Thumbnail size:", [150, 200, 300, 400], index=1, 
-                                     help="Smaller thumbnails load faster")
-num_columns = st.slider("Number of columns to display images:", 
-                                min_value=2, max_value=20, value=10, step=1,
-                                help="Adjust number of columns for image display")
-
-@st.cache_data
-def load_and_resize_image(filepath, size=(200, 200)):
-    """Load and resize image to thumbnail size for faster display"""
-    try:
-        with Image.open(filepath) as image:
-            # Convert to RGB if necessary (for consistency)
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
-            # Create thumbnail while maintaining aspect ratio
-            image.thumbnail(size, Image.Resampling.LANCZOS)
-            return image.copy()
-    except Exception as e:
-        return None
-
-def display_images_in_tab(cluster_label, filepaths):
-    """Display all images for a specific cluster"""
-    if not filepaths:
-        st.write("No images in this cluster.")
-        return
-    
-    # Create columns for layout
-    cols = st.columns(num_columns)
-    
-    # Display all images in columns
-    for idx, filepath in enumerate(filepaths):
-        col = cols[idx % num_columns]
-        with col:
-            # Load and display thumbnail
-            thumbnail = load_and_resize_image(filepath, (thumbnail_size, thumbnail_size))
-            if thumbnail:
-                st.image(thumbnail, caption=Path(filepath).name, width='stretch')
-                # Add button to view full size
-                if st.button(f"View Full Size", key=f"full_{cluster_label}_{idx}"):
-                    with st.expander("Full Size Image", expanded=True):
-                        full_image = Image.open(filepath)
-                        st.image(full_image, caption=Path(filepath).name)
-            else:
-                st.error(f"Error loading: {Path(filepath).name}")
-
-# Create a dictionary of filepaths for each cluster
-filepaths_by_cluster = {}
-for cluster_label in st.session_state["images_df"]['Cluster'].unique():
-    filepaths = st.session_state["images_df"][st.session_state["images_df"]['Cluster'] == cluster_label]['Filepath'].tolist()
-    filepaths_by_cluster[cluster_label] = filepaths
-
-# Display cluster information
-st.subheader("Photo Clusters")
-total_images = sum(len(filepaths) for filepaths in filepaths_by_cluster.values())
-st.info(f"Total images: {total_images} | Clusters: {len(filepaths_by_cluster)}")
-
-# Create tabs for each cluster
-if filepaths_by_cluster:
-    cluster_labels = sorted(filepaths_by_cluster.keys())
-    tab_labels = [f"Cluster {i + 1} ({len(filepaths_by_cluster[label])} photos)" 
-                  for i, label in enumerate(cluster_labels)]
-    
-    tabs = st.tabs(tab_labels)
-    
-    for i, (tab, cluster_label) in enumerate(zip(tabs, cluster_labels)):
-        with tab:
-            filepaths = filepaths_by_cluster[cluster_label]
-            
-            # Display all images for this cluster
-            with st.spinner(f'Loading images for Cluster {cluster_label + 1}...'):
-                display_images_in_tab(cluster_label, filepaths)
-else:
-    st.warning("No image clusters found.")
+# Remove "cluster_names" from session state if it exists
+if "cluster_names" in st.session_state:
+    # Check if the cluster names length matches current clusters
+    current_clusters = st.session_state["images_df"]['Cluster'].unique()
+    if len(current_clusters) != len(st.session_state["cluster_names"]):
+        del st.session_state["cluster_names"]
