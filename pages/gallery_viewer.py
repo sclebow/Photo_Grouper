@@ -1,6 +1,7 @@
 import streamlit as st
 from pathlib import Path
 from PIL import Image
+from stqdm import stqdm
 
 # Performance optimization settings
 st.header("Cluster Image Viewer Settings")
@@ -33,8 +34,10 @@ def display_images_in_tab(cluster_label, filepaths):
     # Create columns for layout
     cols = st.columns(num_columns)
     
-    # Display all images in columns
-    for idx, filepath in enumerate(filepaths):
+    # Display all images in columns with progress bar
+    for idx, filepath in stqdm(enumerate(filepaths), 
+                              desc=f"Loading images for {st.session_state['cluster_names'].get(cluster_label, f'Group {cluster_label + 1}')}",
+                              total=len(filepaths)):
         col = cols[idx % num_columns]
         with col:
             # Load and display thumbnail
@@ -51,7 +54,8 @@ def display_images_in_tab(cluster_label, filepaths):
 
 # Create a dictionary of filepaths for each cluster
 filepaths_by_cluster = {}
-for cluster_label in st.session_state["images_df"]['Cluster'].unique():
+unique_clusters = st.session_state["images_df"]['Cluster'].unique()
+for cluster_label in stqdm(unique_clusters, desc="Organizing clusters"):
     filepaths = st.session_state["images_df"][st.session_state["images_df"]['Cluster'] == cluster_label]['Filepath'].tolist()
     filepaths_by_cluster[cluster_label] = filepaths
 
@@ -87,7 +91,6 @@ if filepaths_by_cluster:
             filepaths = filepaths_by_cluster[cluster_label]
             
             # Display all images for this cluster
-            with st.spinner(f'Loading images for Cluster {cluster_label + 1}...'):
-                display_images_in_tab(cluster_label, filepaths)
+            display_images_in_tab(cluster_label, filepaths)
 else:
     st.warning("No image clusters found.")
