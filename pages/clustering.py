@@ -21,7 +21,7 @@ timestamps = timestamps.reshape(-1, 1)
 timestamps = np.array([[dt.timestamp()] for dt in timestamps.flatten()])
 
 # Apply DBSCAN clustering (convert hours to seconds)
-grouping_hours = st.sidebar.slider("Group photos taken within how many hours?", 
+grouping_hours = st.slider("Group photos taken within how many hours?", 
                                     min_value=0.01, max_value=1.0, value=0.01, step=0.01,
                                     help="Photos taken within this number of hours will be grouped together.")
 eps_seconds = grouping_hours * 3600
@@ -78,9 +78,12 @@ fig = px.histogram(
 st.plotly_chart(fig)
 
 # Performance optimization settings
-st.sidebar.header("Performance Settings")
-thumbnail_size = st.sidebar.selectbox("Thumbnail size:", [150, 200, 300, 400], index=1, 
+st.header("Cluster Image Viewer Settings")
+thumbnail_size = st.selectbox("Thumbnail size:", [150, 200, 300, 400], index=1, 
                                      help="Smaller thumbnails load faster")
+num_columns = st.slider("Number of columns to display images:", 
+                                min_value=2, max_value=20, value=10, step=1,
+                                help="Adjust number of columns for image display")
 
 @st.cache_data
 def load_and_resize_image(filepath, size=(200, 200)):
@@ -103,7 +106,6 @@ def display_images_in_tab(cluster_label, filepaths):
         return
     
     # Create columns for layout
-    num_columns = 5
     cols = st.columns(num_columns)
     
     # Display all images in columns
