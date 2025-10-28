@@ -86,6 +86,7 @@ if filepaths_by_cluster:
 
             if new_name != st.session_state["cluster_names"][cluster_label]:
                 st.session_state["cluster_names"][cluster_label] = new_name
+                print(f"Renamed cluster {cluster_label} to {new_name}")
                 st.rerun()
 
             filepaths = filepaths_by_cluster[cluster_label]

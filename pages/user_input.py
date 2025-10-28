@@ -43,7 +43,7 @@ else:
         # Use pathlib for more efficient directory traversal
         directory_path = Path(directory)
 
-        for filepath in stqdm(directory_path.iterdir(), desc="Scanning files"):
+        for filepath in stqdm(directory_path.iterdir(), desc="Scanning files", total=len(list(directory_path.iterdir()))):
             if filepath.is_file() and filepath.suffix.lower() in image_extensions:
                 try:
                     # Get file stats in one call
@@ -95,7 +95,9 @@ else:
 fig = px.histogram(
     st.session_state["images_df"],
     x = 'Creation Date',
-    nbins=20,
+    nbins=40,
+    title="Distribution of Photo Creation Dates",
+    labels={"Creation Date": "Creation Date", "count": "Number of Photos"},
 )
 
 st.plotly_chart(fig)
