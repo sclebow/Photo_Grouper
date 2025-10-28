@@ -47,16 +47,21 @@ st.write(f"Number of groups: {len(cluster_counts)}")
 # Display grouped files as a dataframe
 st.subheader("Photo Groups")
 
-# Add download option for CSV
-csv = st.session_state["images_df"].to_csv(index=False)
-st.download_button(
-    label="Download results as CSV",
-    data=csv,
-    file_name=f"photo_groups_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-    mime="text/csv"
-)
+# Reorder clusters by creation date
+cluster_order = st.session_state["images_df"].groupby('Cluster')['Creation Date'].min().sort_values().index.tolist()
+cluster_name_mapping = {old_label: new_label for new_label, old_label in enumerate(cluster_order)}
 
-st.dataframe(st.session_state["images_df"], width='stretch')
+with st.expander("Cluster Data"):
+    # Add download option for CSV
+    csv = st.session_state["images_df"].to_csv(index=False)
+    st.download_button(
+        label="Download results as CSV",
+        data=csv,
+        file_name=f"photo_groups_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+        mime="text/csv"
+    )
+
+    st.dataframe(st.session_state["images_df"], width='stretch')
 
 # Show cluster data
 st.subheader("Cluster Data")
