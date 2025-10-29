@@ -51,6 +51,8 @@ st.subheader("Photo Groups")
 cluster_order = st.session_state["images_df"].groupby('Cluster')['Creation Date'].min().sort_values().index.tolist()
 cluster_name_mapping = {old_label: new_label for new_label, old_label in enumerate(cluster_order)}
 
+st.session_state["images_df"]['Cluster'] = st.session_state["images_df"]['Cluster'].map(cluster_name_mapping)
+
 with st.expander("Cluster Data"):
     # Add download option for CSV
     csv = st.session_state["images_df"].to_csv(index=False)

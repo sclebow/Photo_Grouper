@@ -41,7 +41,7 @@ if run_button:
             cluster_folder.mkdir(parents=True, exist_ok=True)
 
             # Move files to the cluster folder
-            for filepath in stqdm(filepaths, desc=f"Processing {i+1:02d} {cluster_name}: {Path(filepath).name}"):
+            for filepath in stqdm(filepaths, desc=f"Processing {i+1:02d} {cluster_name}"):
                 new_path = cluster_folder / Path(filepath).name
                 if copy_true:
                     shutil.copy(filepath, new_path)
@@ -63,7 +63,7 @@ if run_button:
             cluster_folder.mkdir(parents=True, exist_ok=True)
 
             # Move files to the cluster folder
-            for filepath in stqdm(filepaths, desc=f"Processing {i+1:02d} {cluster_name}: {Path(filepath).name}"):
+            for filepath in stqdm(filepaths, desc=f"Processing {i+1:02d} {cluster_name}"):
                 new_path = cluster_folder / Path(filepath).name
                 if copy_true:
                     shutil.copy(filepath, new_path)
