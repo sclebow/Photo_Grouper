@@ -52,6 +52,14 @@ def display_images_in_tab(cluster_label, filepaths):
             else:
                 st.error(f"Error loading: {Path(filepath).name}")
 
+if "images_df" not in st.session_state:
+    st.warning("No image data found. Please upload images on the User Input page.")
+    st.page_link(
+        page="./pages/user_input.py",
+        label="Go to User Input Page",
+    )
+    st.stop()
+
 # Create a dictionary of filepaths for each cluster
 filepaths_by_cluster = {}
 unique_clusters = st.session_state["images_df"]['Cluster'].unique()
@@ -93,5 +101,12 @@ if filepaths_by_cluster:
             
             # Display all images for this cluster
             display_images_in_tab(cluster_label, filepaths)
+    
+    st.markdown("---")
+    st.page_link(
+        page="./pages/organizer.py",
+        label="Proceed to Organizer Page",
+    )
+    
 else:
     st.warning("No image clusters found.")

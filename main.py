@@ -16,6 +16,7 @@ st.set_page_config(
     page_title="Fast Photo Organizer",
     page_icon="⚡",
     layout="wide",
+    initial_sidebar_state="collapsed",
 )
 
 st.title("Fast Photo Organizer by Creation Date")

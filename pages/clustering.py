@@ -95,3 +95,9 @@ if "cluster_names" in st.session_state:
     current_clusters = st.session_state["images_df"]['Cluster'].unique()
     if len(current_clusters) != len(st.session_state["cluster_names"]):
         del st.session_state["cluster_names"]
+
+st.markdown("---")
+st.page_link(
+    page="./pages/gallery_viewer.py",
+    label="Proceed to Gallery Viewer Page",
+)
