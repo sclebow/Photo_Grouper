@@ -7,9 +7,6 @@ from datetime import datetime
 from plotly import express as px
 from stqdm import stqdm
 
-# Add configuration options in sidebar
-st.sidebar.header("Configuration")
-
 if "directory" not in st.session_state:
     st.session_state["directory"] = None
 
